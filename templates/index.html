@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Panel Anomaly Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Solar Panel Anomaly Detection</h1>
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="model">Select Model:</label>
+                <select name="model" id="model">
+                    <option value="" selected>No Model (Use Both)</option>
+                    <option value="ResNet50">ResNet50</option>
+                    <option value="MobileNetV2">MobileNetV2</option>
+                    <option value="Both Models">Both Models</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="images">Upload Images (PNG, JPG, JPEG):</label>
+                <input type="file" name="images" id="images" accept=".png,.jpg,.jpeg" multiple required>
+            </div>
+            <button type="submit">Analyze Images</button>
+        </form>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <p class="flash {{ category }}">{{ message }}</p>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% if results %}
+        <h2>Results (Model: {{ model_name or 'Both Models (Highest Confidence)' }})</h2>
+        <div class="results">
+            {% for result in results %}
+            <div class="result-item">
+                <h3>{{ result.filename }}</h3>
+                <img src="{{ result.img_src }}" alt="{{ result.filename }}">
+                <p>Prediction: {{ result.predicted_class }}</p>
+                <p>Confidence: {{ result.confidence }}</p>
+                <p>Model Used: {{ result.model_used }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>
