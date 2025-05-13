@@ -25,17 +25,20 @@ MODELS = {
     'MobileNetV2': tf.keras.models.load_model('models/mobilenetv2_model.keras')
 }
 
-def preprocess_image(image_path, target_size=(224, 224)):
+def preprocess_image(image_path,model_name, target_size=(224, 224)):
     """Preprocess an image for model prediction."""
     img = load_img(image_path, target_size=target_size)
     img_array = img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
-    img_array = tf.keras.applications.resnet50.preprocess_input(img_array)  # Use ResNet50 preprocessing (works for both models)
+    img_array = np.expand_dims(img_array, axis=0)
+    if model_name == 'ResNet50':
+        img_array = tf.keras.applications.resnet50.preprocess_input(img_array)
+    else:
+        img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
     return img_array
 
 def predict_image(image_path, model_name):
     """Predict the class of an image using the specified model."""
-    img_array = preprocess_image(image_path)
+    img_array = preprocess_image(image_path,model_name)
     model = MODELS[model_name]
     predictions = model.predict(img_array)
     predicted_class = CLASS_NAMES[np.argmax(predictions[0])]
