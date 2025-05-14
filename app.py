@@ -17,28 +17,50 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Class names for predictions
-CLASS_NAMES = ['Clean', 'Dusty', 'Bird-drop', 'Electrical-damage', 'Physical-Damage', 'Snow-Covered']
+CLASS_NAMES = ['Bird-drop','Clean', 'Dusty', 'Electrical-damage', 'Physical-Damage', 'Snow-Covered']
 
 # Load models
 MODELS = {
     'ResNet50': tf.keras.models.load_model('models/best_model_stage2.keras'),
-    'MobileNetV2': tf.keras.models.load_model('models/mobilenetv2_model.keras')
+    # 'MobileNetV2': tf.keras.models.load_model('models/mobilenetv2_model.keras'),
+    'MobileNetV3': tf.keras.models.load_model('models/my_solar_model.keras')
 }
 
-def preprocess_image(image_path,model_name, target_size=(224, 224)):
-    """Preprocess an image for model prediction."""
+# def preprocess_image(image_path, model_name, target_size=(224, 224)):
+#     """Preprocess an image for model prediction."""
+#     img = load_img(image_path, target_size=target_size)
+#     img_array = img_to_array(img)
+#     img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+#     if model_name == 'ResNet50':
+#         img_array = tf.keras.applications.resnet50.preprocess_input(img_array)
+#     elif model_name == 'MobileNetV3':
+#         img_array = tf.keras.applications.mobilenet_v3.preprocess_input(img_array)
+#     return img_array
+def preprocess_image(image_path, model_name, target_size=(224, 224)):
     img = load_img(image_path, target_size=target_size)
-    img_array = img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)
+    img_array = img_to_array(img).astype('float32')  # ensure float32
+    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+
+    # Model-specific preprocessing
     if model_name == 'ResNet50':
         img_array = tf.keras.applications.resnet50.preprocess_input(img_array)
-    else:
-        img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
+    # elif model_name == 'MobileNetV2':
+    #     img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
+    elif model_name == 'MobileNetV3':
+        img_array = tf.keras.applications.mobilenet_v3.preprocess_input(img_array)
+
+    # Debug: log the preprocessed image details
+    print("Preprocessed image stats - Max:", np.max(img_array),
+          "Min:", np.min(img_array),
+          "Shape:", img_array.shape)
+
     return img_array
+
+
 
 def predict_image(image_path, model_name):
     """Predict the class of an image using the specified model."""
-    img_array = preprocess_image(image_path,model_name)
+    img_array = preprocess_image(image_path, model_name)
     model = MODELS[model_name]
     predictions = model.predict(img_array)
     predicted_class = CLASS_NAMES[np.argmax(predictions[0])]
